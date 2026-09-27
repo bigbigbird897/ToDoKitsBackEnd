@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ToDoKits.Command/ToDoKits.Command.csproj" />
+  <Project Path="ToDoKits.Controllers/ToDoKits.Controllers.csproj" />
+  <Project Path="ToDoKits.Models/ToDoKits.Models.csproj" />
+  <Project Path="ToDoKits.Services/ToDoKits.Services.csproj" />
+</Solution>
