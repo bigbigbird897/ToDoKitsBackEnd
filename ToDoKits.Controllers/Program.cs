@@ -71,7 +71,11 @@ try
     app.UseCors("any");
     app.MapControllers();
 
-    // ===== 托管前端静态文件（FrontEnd/dist 存在时）=====
+    // 托管 wwwroot（发布时把前端 dist 拷贝到此即成为单包可运行版本）
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+
+    // ===== 开发便捷：直接托管仓库内 FrontEnd/dist（存在时）=====
     var frontDist = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "..", "FrontEnd", "dist"));
     if (Directory.Exists(frontDist))
     {
