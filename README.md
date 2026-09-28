@@ -60,8 +60,45 @@ dotnet build ToDoKits.Backend.slnx
 dotnet run --project ToDoKits.Controllers   # http://localhost:5000
 ```
 
+## 发布与 GitHub Actions 打包
+
+三个仓库（父仓库管理 2 个子模块）已关联 GitHub：
+
+| 仓库 | 地址 |
+|---|---|
+| 父仓库 | `git@github.com:bigbigbird897/ToDoKits.git` |
+| 后端 | `git@github.com:bigbigbird897/ToDoKitsBackEnd.git` |
+| 前端 | `git@github.com:bigbigbird897/ToDoKitsFrontEnd.git` |
+
+发布步骤（SSH 认证，网络瞬断时报 `ssh: connect to host github.com port 22 ...` / `correct access rights` 多为偶发，重试即可）：
+
+```bash
+# 1. 配置远端
+git -C FrontEnd remote add origin git@github.com:bigbigbird897/ToDoKitsFrontEnd.git
+git -C BackEnd  remote add origin git@github.com:bigbigbird897/ToDoKitsBackEnd.git
+git -C ToDoKits remote add origin git@github.com:bigbigbird897/ToDoKits.git
+
+# 2. .gitmodules 中子模块 URL 指向远端 https（Actions checkout 需要，不能是本地相对路径）
+#    FrontEnd -> https://github.com/bigbigbird897/ToDoKitsFrontEnd.git
+#    BackEnd  -> https://github.com/bigbigbird897/ToDoKitsBackEnd.git
+
+# 3. 打 tag 并推送（先后端 / 前端，再父仓库）
+git -C FrontEnd tag v1.0.0 && git -C FrontEnd push -u origin main && git -C FrontEnd push origin v1.0.0
+git -C BackEnd  tag v1.0.0 && git -C BackEnd  push -u origin main && git -C BackEnd  push origin v1.0.0
+git -C ToDoKits tag v1.0.0 && git -C ToDoKits push -u origin main && git -C ToDoKits push origin v1.0.0
+```
+
+GitHub Actions（父仓库 `.github/workflows/release.yml`）：
+- 触发：向父仓库推送 `v*` 标签（如 `v1.0.0`），或 `workflow_dispatch` 手动触发。
+- 流程：`actions/checkout`（含子模块）→ 前端 `npm ci && npm run build`；后端 `dotnet publish`（linux-x64 / win-x64 自包含，非单文件）→ 组装 win/linux 单包（后端可执行 + 前端 dist 进 `wwwroot`）+ 纯前端静态产物 → `softprops/action-gh-release` 生成 GitHub Release。
+- 产物：`ToDoKits-win-x64.zip`、`ToDoKits-linux-x64.zip`、`ToDoKits-frontend-www.zip`。
+
+注意：
+- 若子模块（如 ToDoKitsBackEnd）为**私有**仓库，Actions 的 `GITHUB_TOKEN` 无法跨仓库拉取私有子模块，会导致 `checkout` 失败——需将子模块设为 public，或在仓库 `Settings → Secrets and variables → Actions` 配置可访问子模块的 PAT，并在 workflow 的 `checkout` 步骤通过 `token` 传入。
+
 ## 变更记录
 
+- 2026-09-28：发布 v1.0.0 到 GitHub——父仓库（ToDoKits）+ 子模块 FrontEnd/BackEnd 配置 SSH 远端；`.gitmodules` 子模块 URL 由本地相对路径改为远端 https；三个仓库各自打 `v1.0.0` tag 并推送 main 与 tag；父仓库 `v1.0.0` 推送触发 GitHub Actions `release.yml` 打包 win/linux 单包与前端产物生成 Release。
 - 2026-09-27：四项目解决方案创建；实体/DTO/建表；服务接口与实现；8 个 Controller + Program（Serilog + Autofac 属性注入 + SqlSugar）；编译 0 警告 0 错误。
 - 2026-09-28：修复启动期 Autofac 异常（`IContainer has not been registered`）——`ServiceLocator` 改用 `ILifetimeScope` 存储/解析，`Program.cs` 直接传入 `GetAutofacRoot()` 根作用域，不再 `Resolve<IContainer>()`；编译 0 警告 0 错误。
 - 2026-09-28：修复 Todo 写入报 `column Name does not exist`——`DbInitializer` 改为在建表前校验已存在表的列结构，列不齐（旧/大小写不一致的残留表）则先删表再重建；特性经反射读取避免强类型依赖；编译 0 警告 0 错误。
