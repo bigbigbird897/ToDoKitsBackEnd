@@ -29,7 +29,7 @@ try
     builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory(container =>
     {
         var conn = builder.Configuration.GetConnectionString("Default")
-                   ?? "Host=localhost;Port=5432;Database=todokits;Username=postgres;Password=postgres";
+                   ?? "Host=localhost;Port=5432;Database=todokits;Username=postgres;Password=11";
         var loggerFactory = LoggerFactory.Create(lb => lb.AddSerilog());
 
         // 第三方组件：日志工厂 + SqlSugar(PostgreSQL)
@@ -56,9 +56,9 @@ try
 
     var app = builder.Build();
 
-    // 初始化服务定位器
+    // 初始化服务定位器（根作用域自我注册 ILifetimeScope，直接用，勿再 Resolve<IContainer>）
     var rootScope = app.Services.GetAutofacRoot();
-    ServiceLocator.Initialize(rootScope.Resolve<IContainer>());
+    ServiceLocator.Initialize(rootScope);
 
     // 初始化数据库（CodeFirst 建表，表已存在则自动补列）
     using (var scope = app.Services.CreateScope())

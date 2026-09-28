@@ -8,14 +8,14 @@ namespace ToDoKits.Command;
 /// </summary>
 public static class ServiceLocator
 {
-    private static IContainer? _container;
+    private static ILifetimeScope? _scope;
 
-    /// <summary>容器构建完成后调用一次。</summary>
-    public static void Initialize(IContainer container) => _container = container;
+    /// <summary>容器构建完成后调用一次（传入根作用域，它自我注册 ILifetimeScope，可稳定解析）。</summary>
+    public static void Initialize(ILifetimeScope scope) => _scope = scope;
 
     /// <summary>按类型解析实例。</summary>
-    public static T Resolve<T>() where T : notnull => _container!.Resolve<T>();
+    public static T Resolve<T>() where T : notnull => _scope!.Resolve<T>();
 
     /// <summary>按运行类型解析实例。</summary>
-    public static object Resolve(Type type) => _container!.Resolve(type);
+    public static object Resolve(Type type) => _scope!.Resolve(type);
 }
