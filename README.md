@@ -96,9 +96,16 @@ GitHub Actions（父仓库 `.github/workflows/release.yml`）：
 注意：
 - 若子模块（如 ToDoKitsBackEnd）为**私有**仓库，Actions 的 `GITHUB_TOKEN` 无法跨仓库拉取私有子模块，会导致 `checkout` 失败——需将子模块设为 public，或在仓库 `Settings → Secrets and variables → Actions` 配置可访问子模块的 PAT，并在 workflow 的 `checkout` 步骤通过 `token` 传入。
 
+**打包版本锁定（`release-tags.json`）**：
+- 父仓库根目录 `release-tags.json` 记录当前打包所用的前端/后端 tag，例如 `{"FrontEnd":"v1.0.1","BackEnd":"v1.0.1"}`。
+- `release.yml` 的 `build-frontend` / `build-backend` 在 `checkout`（含子模块）后，会读取该文件，把对应子模块 `git fetch --tags && git checkout -f <tag>` 到指定 tag 再构建，保证打包内容与父仓库 gitlink 指针解耦、严格锁定到配置版本。
+- 更换打包版本：给子模块打新 tag 并推送 → 更新 `release-tags.json` → 父仓库提交推送并打新 `v*` tag 触发。
+
 ## 变更记录
 
 - 2026-09-28：发布 v1.0.0 到 GitHub——父仓库（ToDoKits）+ 子模块 FrontEnd/BackEnd 配置 SSH 远端；`.gitmodules` 子模块 URL 由本地相对路径改为远端 https；三个仓库各自打 `v1.0.0` tag 并推送 main 与 tag；父仓库 `v1.0.0` 推送触发 GitHub Actions `release.yml` 打包 win/linux 单包与前端产物生成 Release。
+- 2026-09-28：修复 GitHub Actions 打包——`download-artifact` 去掉 `merge-multiple`（保留各产物独立子目录，修复 `cp artifacts/backend-win-x64/*` 找不到目录）；关闭 `generate_release_notes` 与改用 `GH_TOKEN || github.token`（规避 GITHUB_TOKEN 对 generate-notes / create-release 接口的 403，仓库开启 Actions Read and write 权限后创建 Release 成功）；新增 `release-tags.json` 锁定打包所用的前端/后端 tag，`release.yml` 构建 job 先切换到配置 tag 再打包。
+- 2026-09-28：前后端升级发布 v1.0.1——为 FrontEnd（`7ea0084`）与 BackEnd（`31f6e09`）打 `v1.0.1` tag 并推送；更新 `release-tags.json` 为 `{"FrontEnd":"v1.0.1","BackEnd":"v1.0.1"}`；父仓库打 `v1.0.5` tag 触发重新打包。
 - 2026-09-27：四项目解决方案创建；实体/DTO/建表；服务接口与实现；8 个 Controller + Program（Serilog + Autofac 属性注入 + SqlSugar）；编译 0 警告 0 错误。
 - 2026-09-28：修复启动期 Autofac 异常（`IContainer has not been registered`）——`ServiceLocator` 改用 `ILifetimeScope` 存储/解析，`Program.cs` 直接传入 `GetAutofacRoot()` 根作用域，不再 `Resolve<IContainer>()`；编译 0 警告 0 错误。
 - 2026-09-28：修复 Todo 写入报 `column Name does not exist`——`DbInitializer` 改为在建表前校验已存在表的列结构，列不齐（旧/大小写不一致的残留表）则先删表再重建；特性经反射读取避免强类型依赖；编译 0 警告 0 错误。
