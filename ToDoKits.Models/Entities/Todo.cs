@@ -10,11 +10,11 @@ public class Todo
     public long Id { get; set; }
 
     /// <summary>事项名称。</summary>
-    [SugarColumn(Length = 200)]
+    [SugarColumn(Length = 200,IsNullable =true)]
     public string Name { get; set; } = "";
 
     /// <summary>所属类别（工作 / 个人 / 旅游…）。</summary>
-    [SugarColumn(Length = 50)]
+    [SugarColumn(Length = 50, IsNullable = true)]
     public string Cat { get; set; } = "工作";
 
     /// <summary>开始时间（默认创建时间，可改，yyyy-MM-dd）。</summary>
