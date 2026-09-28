@@ -27,7 +27,7 @@ public class Note
     [SugarColumn(Length = 200)]
     public string Title { get; set; } = "";
 
-    [SugarColumn(Length = int.MaxValue, IsNullable = true)]
+    [SugarColumn(ColumnDataType = "text", IsNullable = true)]
     public string? Content { get; set; }
 
     /// <summary>记录日期（yyyy-MM-dd）。</summary>

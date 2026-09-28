@@ -26,6 +26,6 @@ public class Diary
     public string? Weather { get; set; }
 
     /// <summary>日记正文。</summary>
-    [SugarColumn(Length = int.MaxValue, IsNullable = true)]
+    [SugarColumn(ColumnDataType = "text", IsNullable = true)]
     public string? Text { get; set; }
 }
