@@ -34,8 +34,9 @@ try
 
         // 第三方组件：日志工厂 + SqlSugar(PostgreSQL)
         container.RegisterInstance(loggerFactory).As<ILoggerFactory>();
+        // InstancePerLifetimeScope：每个请求一个客户端，避免并发查询共享单实例导致 Connection already open
         container.Register(_ => SqlSugarFactory.Create(conn))
-            .As<ISqlSugarClient>().SingleInstance();
+            .As<ISqlSugarClient>().InstancePerLifetimeScope();
 
         // 业务服务：接口 → 实现，全部注册 + 属性注入
         container.RegisterAssemblyTypes(typeof(TodoService).Assembly)
@@ -51,7 +52,9 @@ try
             .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
     }));
 
-    builder.Services.AddControllers();
+    // AddControllersAsServices：让 MVC 从 Autofac 容器解析控制器，
+    // 使控制器上的 PropertiesAutowired 属性注入生效。
+    builder.Services.AddControllers().AddControllersAsServices();
     builder.Services.AddCors(o => o.AddPolicy("any", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
     var app = builder.Build();

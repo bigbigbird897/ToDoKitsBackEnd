@@ -29,7 +29,7 @@ public static class DbInitializer
                 var existing = db.DbMaintenance
                     .GetColumnInfosByTableName(tableName, false)
                     .Select(c => c.DbColumnName)
-                    .ToHashSet(StringComparer.Ordinal);
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 var need = t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                     .Select(GetColumnName);

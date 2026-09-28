@@ -66,3 +66,4 @@ dotnet run --project ToDoKits.Controllers   # http://localhost:5000
 - 2026-09-28：修复启动期 Autofac 异常（`IContainer has not been registered`）——`ServiceLocator` 改用 `ILifetimeScope` 存储/解析，`Program.cs` 直接传入 `GetAutofacRoot()` 根作用域，不再 `Resolve<IContainer>()`；编译 0 警告 0 错误。
 - 2026-09-28：修复 Todo 写入报 `column Name does not exist`——`DbInitializer` 改为在建表前校验已存在表的列结构，列不齐（旧/大小写不一致的残留表）则先删表再重建；特性经反射读取避免强类型依赖；编译 0 警告 0 错误。
 - 2026-09-28：修复建表报 `varchar length cannot exceed 10485760`——`Note.Content`、`Diary.Text` 两处长文本列由 `Length=int.MaxValue` 改为 `ColumnDataType="text"`（PostgreSQL text 无长度上限）；编译 0 警告 0 错误。
+- 2026-09-28：修复控制器属性注入不生效（`AddControllersAsServices`，让 MVC 从 Autofac 容器解析控制器）；修复 PostgreSQL 大小写不一致（`PgSqlIsAutoToLower=true`，查询与建表统一小写）；修复并发查询 `Connection already open`（`ISqlSugarClient` 由 `SingleInstance` 改 `InstancePerLifetimeScope`，每请求一实例）；编译 0 警告 0 错误，接口 CRUD 实测通过。

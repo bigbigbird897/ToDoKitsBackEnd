@@ -15,7 +15,7 @@ public static class SqlSugarFactory
             DbType = DbType.PostgreSQL,      // 数据库为 PostgreSQL
             IsAutoCloseConnection = true,
             InitKeyType = InitKeyType.Attribute,
-            MoreSettings = new ConnMoreSettings { PgSqlIsAutoToLower = false }
+            MoreSettings = new ConnMoreSettings { PgSqlIsAutoToLower = true }
         });
         return db;
     }
