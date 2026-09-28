@@ -9,6 +9,9 @@ public class Todo
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
     public long Id { get; set; }
 
+    /// <summary>所属账号 Id（多租户隔离）。</summary>
+    public long UserId { get; set; }
+
     /// <summary>事项名称。</summary>
     [SugarColumn(Length = 200,IsNullable =true)]
     public string Name { get; set; } = "";

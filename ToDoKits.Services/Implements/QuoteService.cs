@@ -6,10 +6,10 @@ using ToDoKits.Services.Interfaces;
 
 namespace ToDoKits.Services.Implements;
 
-public class QuoteService : AppService, IQuoteService
+public class QuoteService : ServiceBase, IQuoteService
 {
     public async Task<List<Quote>> GetAllAsync() =>
-        await Db.Queryable<Quote>().OrderBy(q => q.Date, OrderByType.Desc).ToListAsync();
+        await Db.Queryable<Quote>().Where(q => q.UserId == User.UserId).OrderBy(q => q.Date, OrderByType.Desc).ToListAsync();
 
     public async Task<Quote> CreateAsync(QuoteInput input)
     {
@@ -19,7 +19,8 @@ public class QuoteService : AppService, IQuoteService
             Who = input.Who,
             Src = input.Src,
             Tags = input.Tags,
-            Date = string.IsNullOrWhiteSpace(input.Date) ? DateTime.Now.ToString("yyyy-MM-dd") : input.Date
+            Date = string.IsNullOrWhiteSpace(input.Date) ? DateTime.Now.ToString("yyyy-MM-dd") : input.Date,
+            UserId = User.UserId
         };
         var id = await Db.Insertable(quote).ExecuteReturnIdentityAsync();
         quote.Id = id;
@@ -28,7 +29,7 @@ public class QuoteService : AppService, IQuoteService
 
     public async Task<Quote> UpdateAsync(long id, QuoteInput input)
     {
-        var quote = await Db.Queryable<Quote>().FirstAsync(q => q.Id == id)
+        var quote = await Db.Queryable<Quote>().FirstAsync(q => q.Id == id && q.UserId == User.UserId)
                     ?? throw new KeyNotFoundException($"名言 {id} 不存在");
         quote.Text = input.Text;
         quote.Who = input.Who;
@@ -40,5 +41,5 @@ public class QuoteService : AppService, IQuoteService
     }
 
     public async Task DeleteAsync(long id) =>
-        await Db.Deleteable<Quote>().Where(q => q.Id == id).ExecuteCommandAsync();
+        await Db.Deleteable<Quote>().Where(q => q.Id == id && q.UserId == User.UserId).ExecuteCommandAsync();
 }

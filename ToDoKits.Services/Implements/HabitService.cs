@@ -5,10 +5,10 @@ using ToDoKits.Services.Interfaces;
 
 namespace ToDoKits.Services.Implements;
 
-public class HabitService : AppService, IHabitService
+public class HabitService : ServiceBase, IHabitService
 {
     public async Task<List<Habit>> GetAllAsync() =>
-        await Db.Queryable<Habit>().OrderBy(h => h.Id).ToListAsync();
+        await Db.Queryable<Habit>().Where(h => h.UserId == User.UserId).OrderBy(h => h.Id).ToListAsync();
 
     public async Task<Habit> CreateAsync(HabitInput input)
     {
@@ -19,7 +19,8 @@ public class HabitService : AppService, IHabitService
             Goal = input.Goal,
             Time = input.Time,
             Streak = 0,
-            DoneToday = false
+            DoneToday = false,
+            UserId = User.UserId
         };
         var id = await Db.Insertable(habit).ExecuteReturnIdentityAsync();
         habit.Id = id;
@@ -28,7 +29,7 @@ public class HabitService : AppService, IHabitService
 
     public async Task<Habit> UpdateAsync(long id, HabitInput input)
     {
-        var habit = await Db.Queryable<Habit>().FirstAsync(h => h.Id == id)
+        var habit = await Db.Queryable<Habit>().FirstAsync(h => h.Id == id && h.UserId == User.UserId)
                     ?? throw new KeyNotFoundException($"习惯 {id} 不存在");
         habit.Name = input.Name;
         habit.Cat = string.IsNullOrWhiteSpace(input.Cat) ? "健康" : input.Cat;
@@ -39,11 +40,11 @@ public class HabitService : AppService, IHabitService
     }
 
     public async Task DeleteAsync(long id) =>
-        await Db.Deleteable<Habit>().Where(h => h.Id == id).ExecuteCommandAsync();
+        await Db.Deleteable<Habit>().Where(h => h.Id == id && h.UserId == User.UserId).ExecuteCommandAsync();
 
     public async Task<Habit?> ToggleAsync(long id)
     {
-        var habit = await Db.Queryable<Habit>().FirstAsync(h => h.Id == id);
+        var habit = await Db.Queryable<Habit>().FirstAsync(h => h.Id == id && h.UserId == User.UserId);
         if (habit == null) return null;
         if (habit.DoneToday)
         {

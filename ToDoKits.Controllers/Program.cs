@@ -1,7 +1,11 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using ToDoKits.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using SqlSugar;
@@ -38,6 +42,9 @@ try
         container.Register(_ => SqlSugarFactory.Create(conn))
             .As<ISqlSugarClient>().InstancePerLifetimeScope();
 
+        // 当前登录用户上下文（从 JWT 的 ClaimsPrincipal 读取 UserId）
+        container.RegisterType<ToDoKits.Controllers.UserContext>().As<IUserContext>().InstancePerLifetimeScope();
+
         // 业务服务：接口 → 实现，全部注册 + 属性注入
         container.RegisterAssemblyTypes(typeof(TodoService).Assembly)
             .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Service"))
@@ -54,8 +61,33 @@ try
 
     // AddControllersAsServices：让 MVC 从 Autofac 容器解析控制器，
     // 使控制器上的 PropertiesAutowired 属性注入生效。
-    builder.Services.AddControllers().AddControllersAsServices();
+    // AddControllersAsServices：让 MVC 从 Autofac 容器解析控制器，
+    // 使控制器上的 PropertiesAutowired 属性注入生效；并全局要求登录（AuthController 已 AllowAnonymous）。
+    builder.Services.AddControllers(o =>
+    {
+        var policy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+        o.Filters.Add(new Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter(policy));
+    }).AddControllersAsServices();
     builder.Services.AddCors(o => o.AddPolicy("any", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
+    // ===== JWT 认证：登录后签发 token，前端带 Authorization: Bearer <token> =====
+    builder.Services.AddHttpContextAccessor();
+    var jwtKey = builder.Configuration["Jwt:Secret"] ?? "ToDoKits-Dev-Key-Change-Me-2026!!";
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(o =>
+        {
+            o.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = "todokits",
+                ValidateAudience = true,
+                ValidAudience = "todokits",
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(2)
+            };
+        });
 
     var app = builder.Build();
 
@@ -72,6 +104,8 @@ try
     }
 
     app.UseCors("any");
+    app.UseAuthentication();
+    app.UseAuthorization();
     app.MapControllers();
 
     // 托管 wwwroot（发布时把前端 dist 拷贝到此即成为单包可运行版本）

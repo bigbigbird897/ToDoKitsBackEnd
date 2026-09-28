@@ -14,7 +14,7 @@ public static class DbInitializer
 {
     private static readonly Type[] EntityTypes =
     {
-        typeof(Todo), typeof(TodoCategory), typeof(HabitCategory),
+        typeof(User), typeof(Todo), typeof(TodoCategory), typeof(HabitCategory),
         typeof(Habit), typeof(Quote), typeof(Folder), typeof(Note), typeof(Diary),
     };
 
@@ -40,7 +40,16 @@ public static class DbInitializer
                 }
             }
 
-            db.CodeFirst.InitTables(t);
+            try
+            {
+                db.CodeFirst.InitTables(t);
+            }
+            catch
+            {
+                // 表已存在但结构不兼容（如新增 NOT NULL 列时存量行为 NULL）→ 删除重建
+                db.DbMaintenance.DropTable(tableName);
+                db.CodeFirst.InitTables(t);
+            }
         }
     }
 

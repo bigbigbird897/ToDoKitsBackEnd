@@ -5,7 +5,7 @@ using ToDoKits.Services.Interfaces;
 
 namespace ToDoKits.Services.Implements;
 
-public class StatsService : AppService, IStatsService
+public class StatsService : ServiceBase, IStatsService
 {
     private static DateTime Parse(string s)
     {
@@ -19,7 +19,7 @@ public class StatsService : AppService, IStatsService
     {
         var s = Parse(start);
         var e = Parse(end);
-        var todos = await Db.Queryable<Todo>().ToListAsync();
+        var todos = await Db.Queryable<Todo>().Where(t => t.UserId == User.UserId).ToListAsync();
 
         // 范围内完成的事项
         var completed = todos

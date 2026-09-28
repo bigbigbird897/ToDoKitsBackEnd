@@ -9,6 +9,9 @@ public class Diary
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
     public long Id { get; set; }
 
+    /// <summary>所属账号 Id（多租户隔离）。</summary>
+    public long UserId { get; set; }
+
     /// <summary>日期（yyyy-MM-dd）。</summary>
     [SugarColumn(Length = 20)]
     public string Date { get; set; } = "";

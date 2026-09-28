@@ -6,10 +6,10 @@ using ToDoKits.Services.Interfaces;
 
 namespace ToDoKits.Services.Implements;
 
-public class DiaryService : AppService, IDiaryService
+public class DiaryService : ServiceBase, IDiaryService
 {
     public async Task<List<Diary>> GetAllAsync() =>
-        await Db.Queryable<Diary>().OrderBy(d => d.Date, OrderByType.Desc).ToListAsync();
+        await Db.Queryable<Diary>().Where(d => d.UserId == User.UserId).OrderBy(d => d.Date, OrderByType.Desc).ToListAsync();
 
     public async Task<Diary> CreateAsync(DiaryInput input)
     {
@@ -19,7 +19,8 @@ public class DiaryService : AppService, IDiaryService
             Weekday = input.Weekday,
             Location = input.Location,
             Weather = input.Weather,
-            Text = input.Text
+            Text = input.Text,
+            UserId = User.UserId
         };
         var id = await Db.Insertable(diary).ExecuteReturnIdentityAsync();
         diary.Id = id;
@@ -28,7 +29,7 @@ public class DiaryService : AppService, IDiaryService
 
     public async Task<Diary> UpdateAsync(long id, DiaryInput input)
     {
-        var diary = await Db.Queryable<Diary>().FirstAsync(d => d.Id == id)
+        var diary = await Db.Queryable<Diary>().FirstAsync(d => d.Id == id && d.UserId == User.UserId)
                     ?? throw new KeyNotFoundException($"日记 {id} 不存在");
         if (!string.IsNullOrWhiteSpace(input.Date)) diary.Date = input.Date;
         diary.Weekday = input.Weekday;
@@ -40,5 +41,5 @@ public class DiaryService : AppService, IDiaryService
     }
 
     public async Task DeleteAsync(long id) =>
-        await Db.Deleteable<Diary>().Where(d => d.Id == id).ExecuteCommandAsync();
+        await Db.Deleteable<Diary>().Where(d => d.Id == id && d.UserId == User.UserId).ExecuteCommandAsync();
 }

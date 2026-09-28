@@ -1,5 +1,33 @@
 namespace ToDoKits.Models.Dtos;
 
+/// <summary>注册输入。</summary>
+public class RegisterInput
+{
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+}
+
+/// <summary>登录输入。</summary>
+public class LoginInput
+{
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+}
+
+/// <summary>登录成功返回：JWT + 用户信息。</summary>
+public class AuthResult
+{
+    public string Token { get; set; } = "";
+    public AuthUser User { get; set; } = new();
+}
+
+/// <summary>登录用户信息。</summary>
+public class AuthUser
+{
+    public long Id { get; set; }
+    public string Username { get; set; } = "";
+}
+
 /// <summary>待办新增 / 更新的输入。</summary>
 public class TodoInput
 {

@@ -9,6 +9,9 @@ public class Quote
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
     public long Id { get; set; }
 
+    /// <summary>所属账号 Id（多租户隔离）。</summary>
+    public long UserId { get; set; }
+
     /// <summary>名言内容。</summary>
     [SugarColumn(Length = 1000)]
     public string Text { get; set; } = "";
