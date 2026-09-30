@@ -13,6 +13,7 @@ using ToDoKits.Command;
 using ToDoKits.Command.Database;
 using ToDoKits.Models;
 using ToDoKits.Services.Implements;
+using Microsoft.OpenApi.Models;
 
 // ===== Serilog 日志 =====
 Log.Logger = new LoggerConfiguration()
@@ -89,6 +90,27 @@ try
             };
         });
 
+    // ===== Swagger：Debug(Development) 环境把接口显示到 /swagger，支持 JWT Bearer 调试 =====
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(o =>
+    {
+        o.SwaggerDoc("v1", new OpenApiInfo { Title = "ToDoKits API", Version = "v1", Description = "个人生活助手后端接口（调试用）" });
+        // 让 Swagger 右上角出现 Authorize 按钮，可粘贴登录后返回的 JWT token 调试带认证接口
+        o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Description = "登录后返回的 token（直接粘贴 token 即可，Swagger 会自动加 Bearer 前缀）",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT"
+        });
+        o.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() }
+        });
+    });
+
     var app = builder.Build();
 
     // 初始化服务定位器（根作用域自我注册 ILifetimeScope，直接用，勿再 Resolve<IContainer>）
@@ -104,6 +126,15 @@ try
     }
 
     app.UseCors("any");
+
+    // Swagger 仅 Development（Debug）环境启用，发布/生产环境不暴露接口文档
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(o => o.SwaggerEndpoint("/swagger/v1/swagger.json", "ToDoKits API v1"));
+        Log.Information("Swagger 已启用：http://localhost:5000/swagger");
+    }
+
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

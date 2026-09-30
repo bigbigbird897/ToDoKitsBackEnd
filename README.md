@@ -60,6 +60,13 @@ dotnet build ToDoKits.Backend.slnx
 dotnet run --project ToDoKits.Controllers   # http://localhost:5000
 ```
 
+## Swagger 接口调试（Debug 环境）
+
+- 在 **Development（Debug）** 环境下启动，接口自动展示在 `http://localhost:<port>/swagger`（默认 5000；若 `appsettings.json` 配置了 Kestrel 端口则以配置端口为准，如 9610）。
+- 发布 / 生产环境**不启用** Swagger（`Program.cs` 中 `app.Environment.IsDevelopment()` 判断）。
+- Swagger 支持 **JWT Bearer 调试**：先用 `POST /api/auth/register`（或 `/login`）拿到 token，点页面右上角 **Authorize**，粘贴 token 即可调试带锁图标（需登录）的接口。
+- 依赖：`Swashbuckle.AspNetCore` 包（`AddEndpointsApiExplorer` + `AddSwaggerGen` 注册，`UseSwagger` + `UseSwaggerUI` 中间件）。
+
 ## 发布与 GitHub Actions 打包
 
 三个仓库（父仓库管理 2 个子模块）已关联 GitHub：
@@ -112,3 +119,4 @@ GitHub Actions（父仓库 `.github/workflows/release.yml`）：
 - 2026-09-28：修复建表报 `varchar length cannot exceed 10485760`——`Note.Content`、`Diary.Text` 两处长文本列由 `Length=int.MaxValue` 改为 `ColumnDataType="text"`（PostgreSQL text 无长度上限）；编译 0 警告 0 错误。
 - 2026-09-28：修复控制器属性注入不生效（`AddControllersAsServices`，让 MVC 从 Autofac 容器解析控制器）；修复 PostgreSQL 大小写不一致（`PgSqlIsAutoToLower=true`，查询与建表统一小写）；修复并发查询 `Connection already open`（`ISqlSugarClient` 由 `SingleInstance` 改 `InstancePerLifetimeScope`，每请求一实例）；编译 0 警告 0 错误，接口 CRUD 实测通过。
 - 2026-09-28：新增账号体系（JWT 认证 + 多租户数据隔离）——`User` 实体+users 表、`/api/auth/register` `/api/auth/login`（PBKDF2 加盐哈希，签发 HS256 JWT）；全局 `[Authorize]`，所有数据表加 `UserId` 列并按当前账号过滤（待办/习惯/名言/读后感/日记/分类/统计/导出全隔离）；`IUserContext` 从 JWT 读当前用户；DbInitializer 增加「InitTables 失败（如新增 NOT NULL 列遇存量行）则删除重建」兜底。端到端实测：401、登录、注册、账号间数据隔离、错误密码 401、重复注册 409 全部通过。
+- 2026-09-30：添加 Swagger 组件（Swashbuckle.AspNetCore 8.1.0）——Development 环境启用，接口展示在 `/swagger`；配置 JWT Bearer 安全定义（右上角 Authorize 填 token 调试带认证接口）；移除未使用的 `Microsoft.AspNetCore.OpenApi`（其依赖 Microsoft.OpenApi 2.x 与 Swashbuckle 8 的 1.6 API 冲突致编译失败）。编译 0 警告 0 错误，Swagger 页面与 `/swagger/v1/swagger.json` 实测正常。
