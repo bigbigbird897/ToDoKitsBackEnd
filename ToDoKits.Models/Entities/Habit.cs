@@ -34,4 +34,8 @@ public class Habit
     /// <summary>今天是否已打卡。</summary>
     [SugarColumn]
     public bool DoneToday { get; set; }
+
+    /// <summary>上次打卡日期（yyyy-MM-dd），用于跨天自动重置 DoneToday 与连续天数。</summary>
+    [SugarColumn(Length = 20, IsNullable = true)]
+    public string? LastDoneDate { get; set; }
 }
