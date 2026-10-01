@@ -60,6 +60,45 @@ try
             .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
     }));
 
+    #region 自动创建数据库 todokits（不存在则创建）
+
+    var targetDbName = "todokits";
+
+    // 管理连接：连接 PostgreSQL 系统库，用于创建目标数据库
+    var adminConfig = new ConnectionConfig
+    {
+        DbType = DbType.PostgreSQL,
+        ConnectionString = "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=11",
+        IsAutoCloseConnection = true
+    };
+
+    using (var dbAdmin = new SqlSugarClient(adminConfig))
+    {
+        // PostgreSQL 查询数据库是否存在
+        var exists = dbAdmin.Ado.GetInt(
+            "SELECT COUNT(*) FROM pg_database WHERE datname = @databaseName",
+            new SugarParameter("@databaseName", targetDbName)
+        ) > 0;
+
+        if (!exists)
+        {
+            // 数据库名来自固定变量，不建议直接拼接用户输入
+            dbAdmin.Ado.ExecuteCommand(
+                $"CREATE DATABASE \"{targetDbName}\""
+            );
+
+            Log.Information("数据库 {DatabaseName} 创建成功", targetDbName);
+        }
+        else
+        {
+            Log.Information("数据库 {DatabaseName} 已存在，跳过创建", targetDbName);
+        }
+    }
+
+    #endregion
+
+
+
     // AddControllersAsServices：让 MVC 从 Autofac 容器解析控制器，
     // 使控制器上的 PropertiesAutowired 属性注入生效。
     // AddControllersAsServices：让 MVC 从 Autofac 容器解析控制器，
