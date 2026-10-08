@@ -68,6 +68,28 @@ public class NoteInput
     public string Date { get; set; } = "";
 }
 
+/// <summary>工作笔记 · 文件夹新增输入（parentId 为 null 表示根目录）。</summary>
+public class WorkFolderInput
+{
+    public string Name { get; set; } = "";
+    public long? ParentId { get; set; }
+}
+
+/// <summary>工作笔记 · 文件夹重命名输入。</summary>
+public class WorkFolderRename
+{
+    public string Name { get; set; } = "";
+}
+
+/// <summary>工作笔记 · 文件新增 / 更新输入。</summary>
+public class WorkFileInput
+{
+    public string Name { get; set; } = "";
+    public long FolderId { get; set; }
+    public string Type { get; set; } = "txt";
+    public string? Content { get; set; }
+}
+
 /// <summary>日记新增 / 更新的输入。</summary>
 public class DiaryInput
 {

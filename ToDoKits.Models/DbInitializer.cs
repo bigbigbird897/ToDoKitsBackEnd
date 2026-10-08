@@ -16,6 +16,7 @@ public static class DbInitializer
     {
         typeof(User), typeof(Todo), typeof(TodoCategory), typeof(HabitCategory),
         typeof(Habit), typeof(Quote), typeof(Folder), typeof(Note), typeof(Diary),
+        typeof(WorkFolder), typeof(WorkFile),
     };
 
     public static void EnsureCreated(ISqlSugarClient db)
